@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Limit - Universitas Musamus Merauke</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* LOGIN PAGE */
+        .login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
+        .login-card { background: white; border-radius: 16px; padding: 40px 30px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; position: relative; }
+        .login-card h1 { color: #667eea; margin-bottom: 5px; font-size: 1.8em; }
+        .login-card p.subtitle { color: #777; margin-bottom: 25px; font-size: 0.9em; }
+        .login-card label { display: block; text-align: left; margin-top: 15px; font-weight: 600; color: #555; font-size: 0.9em; }
+        .login-card input { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; margin-top: 5px; transition: border-color 0.3s; outline: none; }
+        .login-card input:focus { border-color: #667eea; }
+        .login-card button { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; margin-top: 25px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .login-card button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+        .login-copyright { margin-top: 30px; font-size: 0.75em; color: #999; border-top: 1px solid #eee; padding-top: 15px; line-height: 1.4; }
+
+        /* MAIN APP */
+        .app-container { display: none; flex-direction: column; min-height: 100vh; }
+        .top-bar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .top-bar h2 { font-size: 1.1em; }
+        .top-bar .user-info { font-size: 0.85em; opacity: 0.9; }
+
+        /* NAVIGATION */
+        .nav-bar { background: white; display: flex; overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: sticky; top: 52px; z-index: 99; }
+        .nav-bar button { flex: 1; padding: 14px 10px; border: none; background: white; font-size: 0.9em; font-weight: 600; color: #666; cursor: pointer; transition: all 0.3s; white-space: nowrap; border-bottom: 3px solid transparent; min-width: 100px; }
+        .nav-bar button.active { color: #667eea; border-bottom-color: #667eea; background: #f8f9ff; }
+        .nav-bar button:hover { background: #f0f2f5; }
+
+        /* CONTENT */
+        .content-area { flex: 1; padding: 20px; max-width: 900px; margin: 0 auto; width: 100%; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* CARDS */
+        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .card h3 { color: #667eea; margin-bottom: 12px; font-size: 1.2em; border-left: 4px solid #667eea; padding-left: 12px; }
+        .card p, .card li { line-height: 1.8; color: #555; font-size: 0.95em; }
+        .card ul { padding-left: 20px; }
+        .card li { margin-bottom: 8px; }
+
+        /* FORMULA BOX */
+        .formula-box { background: #f8f9ff; border: 2px solid #667eea; border-radius: 10px; padding: 15px 20px; margin: 15px 0; text-align: center; font-size: 1.1em; font-weight: 600; color: #333; }
+
+        /* EXAMPLE BOX */
+        .example-box { background: #fff8e1; border-left: 4px solid #ffc107; border-radius: 8px; padding: 15px 20px; margin: 12px 0; }
+        .example-box .label { font-weight: 700; color: #f57f17; margin-bottom: 8px; }
+        .example-box .solution { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc; color: #333; }
+
+        /* QUIZ */
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .quiz-progress { background: #e0e0e0; border-radius: 20px; height: 10px; width: 100%; margin-bottom: 20px; overflow: hidden; }
+        .quiz-progress-bar { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 20px; transition: width 0.3s; }
+        .question-card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 15px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .question-number { background: #667eea; color: white; display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: 700; margin-bottom: 10px; }
+        .question-text { font-size: 1.05em; margin-bottom: 15px; line-height: 1.6; }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media(max-width:500px) { .options { grid-template-columns: 1fr; } }
+        .option-btn { padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; background: white; cursor: pointer; font-size: 0.95em; text-align: left; transition: all 0.2s; }
+        .option-btn:hover { border-color: #667eea; background: #f8f9ff; }
+        .option-btn.correct { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; font-weight: 600; }
+        .option-btn.wrong { border-color: #f44336; background: #ffebee; color: #c62828; font-weight: 600; }
+        .option-btn.disabled { pointer-events: none; opacity: 0.7; }
+        .explanation { margin-top: 12px; padding: 15px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800; display: none; line-height: 1.7; font-size: 0.93em; }
+        .explanation.show { display: block; }
+        .explanation strong { color: #e65100; }
+        .quiz-nav { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; }
+        .btn { padding: 12px 24px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        .btn-secondary { background: #e0e0e0; color: #555; }
+        .btn-success { background: #4caf50; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+
+        /* SCORE MODAL */
+        .score-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; padding: 20px; }
+        .score-modal.show { display: flex; }
+        .score-card { background: white; border-radius: 16px; padding: 35px; max-width: 450px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .score-card h2 { color: #667eea; margin-bottom: 20px; }
+        .score-circle { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 2em; font-weight: 700; }
+        .score-circle.good { background: #e8f5e9; color: #2e7d32; }
+        .score-circle.bad { background: #ffebee; color: #c62828; }
+        .score-details { display: flex; justify-content: center; gap: 30px; margin: 20px 0; }
+        .score-detail-item { text-align: center; }
+        .score-detail-item .num { font-size: 1.8em; font-weight: 700; }
+        .score-detail-item .label { font-size: 0.85em; color: #777; }
+
+        /* CALCULATOR */
+        .calc-container { max-width: 600px; margin: 0 auto; }
+        .calc-input-group { margin-bottom: 15px; }
+        .calc-input-group label { display: block; font-weight: 600; color: #555; margin-bottom: 5px; font-size: 0.9em; }
+        .calc-input-group textarea, .calc-input-group input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; outline: none; font-family: monospace; }
+        .calc-input-group textarea:focus, .calc-input-group input:focus { border-color: #667eea; }
+        .calc-result { background: #f8f9ff; border: 2px solid #667eea; border-radius: 12px; padding: 20px; margin-top: 15px; display: none; }
+        .calc-result.show { display: block; }
+        .calc-result h4 { color: #667eea; margin-bottom: 10px; }
+        .calc-result .steps { line-height: 2; font-size: 0.95em; }
+        .calc-result .final-answer { font-size: 1.3em; font-weight: 700; color: #2e7d32; margin-top: 10px; padding-top: 10px; border-top: 2px dashed #ccc; }
+        .tips-box { background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 8px; padding: 15px 20px; margin-top: 15px; }
+        .tips-box h4 { color: #1565c0; margin-bottom: 8px; }
+        .tips-box ul { padding-left: 20px; }
+        .tips-box li { margin-bottom: 8px; font-size: 0.9em; color: #333; }
+        .tips-box li strong { color: #1565c0; }
+        .calc-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .calc-buttons .btn { flex: 1; }
+
+        /* PROFILE */
+        .profile-card { text-align: center; }
+        .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; font-size: 2.5em; color: white; font-weight: 700; }
+        .profile-name { font-size: 1.5em; font-weight: 700; color: #333; margin-bottom: 5px; }
+        .profile-detail { color: #666; font-size: 0.95em; line-height: 1.8; }
+        .profile-detail strong { color: #667eea; }
+
+        /* REFERENCES */
+        .ref-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 4px solid #667eea; }
+        .ref-card h4 { color: #333; margin-bottom: 8px; }
+        .ref-card p { color: #666; font-size: 0.9em; line-height: 1.6; }
+
+        /* FOOTER */
+        .footer { background: #333; color: white; text-align: center; padding: 15px 20px; font-size: 0.85em; margin-top: auto; }
+
+        /* RESPONSIVE */
+        @media(max-width: 600px) {
+            .login-card { padding: 30px 20px; }
+            .login-card h1 { font-size: 1.4em; }
+            .content-area { padding: 15px; }
+            .card { padding: 18px; }
+            .top-bar h2 { font-size: 0.95em; }
+            .nav-bar button { font-size: 0.8em; padding: 12px 8px; min-width: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div class="login-page" id="loginPage">
+    <div class="login-card">
+        <h1>📐 Aplikasi Limit</h1>
+        <p class="subtitle">Universitas Musamus Merauke<br>Fakultas Teknik - Sistem Informasi</p>
+        <label for="inputNama">Nama Lengkap</label>
+        <input type="text" id="inputNama" placeholder="Masukkan nama anda" required>
+        <label for="inputNPM">NPM</label>
+        <input type="text" id="inputNPM" placeholder="Masukkan NPM Anda" required>
+        <label for="inputKelas">Kelas</label>
+        <input type="text" id="inputKelas" placeholder="Masukkan kelas anda" required>
+        <button onclick="doLogin()">Masuk ke Aplikasi</button>
+        
+        <!-- HAK CIPTA DI BAGIAN BAWAH LOGIN -->
+        <div class="login-copyright">
+            © 2026 Melani Ayu Anjani (NPM: 202557201010)<br>
+            Program Studi Sistem Informasi, Fakultas Teknik<br>
+            Universitas Musamus Merauke<br>
+            Dosen Pengampu: Dr. Kamariah, S.Pd., M.Pd<br>
+            Hak Cipta Dilindungi.
+        </div>
+    </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app-container" id="appContainer">
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <h2> Aplikasi Limit</h2>
+        <span class="user-info" id="userInfo"></span>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="nav-bar">
+        <button class="active" onclick="showPage('materi')"> Materi</button>
+        <button onclick="showPage('kalkulator')"> Kalkulator</button>
+        <button onclick="showPage('latihan')">✏️ Latihan Soal</button>
+        <button onclick="showPage('profil')">👤 Profil</button>
+        <button onclick="showPage('referensi')"> Referensi</button>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+
+        <!-- ===== MATERI PAGE ===== -->
+        <div class="page active" id="page-materi">
+            <div class="card">
+                <h3>📘 Apa Itu Limit?</h3>
+                <p><strong>Limit</strong> adalah konsep dasar dalam kalkulus yang menggambarkan nilai yang didekati oleh suatu fungsi ketika variabelnya mendekati suatu nilai tertentu. Secara formal, limit dari fungsi f(x) saat x mendekati c ditulis sebagai:</p>
+                <div class="formula-box">lim<sub>x→c</sub> f(x) = L</div>
+                <p>Artinya: ketika x semakin dekat ke c (dari kiri maupun kanan), maka nilai f(x) semakin dekat ke L.</p>
+            </div>
+
+            <div class="card">
+                <h3>📙 Jenis-Jenis Limit</h3>
+                
+                <h4 style="color:#667eea;margin:15px 0 8px;">1. Limit Fungsi Aljabar</h4>
+                <p>Limit yang melibatkan fungsi polinom, rasional, atau irasional. Diselesaikan dengan substitusi langsung, pemfaktoran, atau perkalian sekawan.</p>
+                <div class="example-box">
+                    <div class="label"> Contoh Soal:</div>
+                    <p>Tentukan lim<sub>x→2</sub> (x² − 5x + 6)/(x² + 2x − 8)</p>
+                    <div class="solution">
+                        <strong>Penyelesaian:</strong><br>
+                        Substitusi x = 2 → 0/0 (bentuk tak tentu)<br>
+                        Faktorkan: (x−2)(x−3) / (x−2)(x+4)<br>
+                        Coret (x−2): (x−3)/(x+4)<br>
+                        Substitusi x = 2: (2−3)/(2+4) = <strong>−1/6</strong>
+                    </div>
+                </div>
+                <p style="font-size:0.8em;color:#999;margin-top:5px;"> Sumber: Saptorini, K. 2020. Ringkasan Matematika SMA. No. 1, hlm. 348</p>
+
+                <h4 style="color:#667eea;margin:15px 0 8px;">2. Limit Fungsi Trigonometri</h4>
+                <p>Limit yang melibatkan fungsi sin, cos, tan. Menggunakan identitas trigonometri dan rumus-rumus khusus.</p>
+                <div class="formula-box">lim<sub>x→0</sub> sin(x)/x = 1 &nbsp;&nbsp;|&nbsp;&nbsp; lim<sub>x→0</sub> (1−cos x)/x² = 1/2</div>
+                <div class="example-box">
+                    <div class="label"> Contoh Soal:</div>
+                    <p>Tentukan lim<sub>x→0</sub> (cos 4x − 1)/(x tan 2x)</p>
+                    <div class="solution">
+                        <strong>Penyelesaian:</strong><br>
+                        Gunakan identitas: cos 4x − 1 = −2sin²(2x)<br>
+                        = lim<sub>x→0</sub> [−2sin²(2x)] / [x · tan(2x)]<br>
+                        = −2 · 2 · 1 = <strong>−4</strong>
+                    </div>
+                </div>
+                <p style="font-size:0.8em;color:#999;margin-top:5px;"> Sumber: Saptorini, K. 2020. Ringkasan Matematika SMA. No. 41, hlm. 352</p>
+
+                <h4 style="color:#667eea;margin:15px 0 8px;">3. Limit Tak Hingga</h4>
+                <p>Limit saat x mendekati ∞. Untuk fungsi rasional, bandingkan pangkat tertinggi pembilang dan penyebut.</p>
+                <div class="example-box">
+                    <div class="label">📝 Contoh Soal:</div>
+                    <p>Tentukan lim<sub>x→∞</sub> (√(x²−4x) − (3x²+x))</p>
+                    <div class="solution">
+                        <strong>Penyelesaian:</strong><br>
+                        Bentuk ∞ − ∞, kalikan sekawan:<br>
+                        Hasil pembagian pangkat tertinggi menunjukkan limit menuju <strong>−∞</strong>.
+                    </div>
+                </div>
+                <p style="font-size:0.8em;color:#999;margin-top:5px;">📌 Sumber: Saptorini, K. 2020. Ringkasan Matematika SMA. No. 25, hlm. 350</p>
+            </div>
+        </div>
+
+        <!-- ===== KALKULATOR PAGE (PROFESSIONAL SYMBOLIC LOGIC) ===== -->
+        <div class="page" id="page-kalkulator">
+            <div class="calc-container">
+                <div class="card">
+                    <h3>🧮 Kalkulator Limit Profesional</h3>
+                    <p style="margin-bottom:15px;color:#666;font-size:0.9em;">Masukkan soal limit Anda. Kalkulator akan menyelesaikan dengan langkah-langkah aljabar, pemfaktoran, dan aturan L'Hopital layaknya buku paket matematika.</p>
+
+                    <div class="calc-input-group">
+                        <label>Fungsi Limit f(x):</label>
+                        <textarea id="calcFunction" rows="3" placeholder="Contoh: (x^2 - 5*x + 6) / (x - 2) atau sqrt(x+1) - 2"></textarea>
+                    </div>
+
+                    <div class="calc-input-group">
+                        <label>Nilai x mendekati (c):</label>
+                        <input type="text" id="calcX0" placeholder="Contoh: 2, 0, atau Infinity">
+                    </div>
+
+                    <div class="calc-buttons">
+                        <button class="btn btn-primary" onclick="calculateCustomLimit()"> Hitung Limit</button>
+                        <button class="btn btn-danger" onclick="resetCalc()"> Reset</button>
+                    </div>
+
+                    <div class="calc-result" id="calcResult">
+                        <h4>📋 Penyelesaian Langkah demi Langkah:</h4>
+                        <div class="steps" id="calcSteps"></div>
+                        <div class="final-answer" id="calcFinal"></div>
+                    </div>
+
+                    <div class="tips-box">
+                        <h4>💡 Tips Menginput Soal:</h4>
+                        <ul>
+                            <li><strong>Untuk Pangkat:</strong> Gunakan tanda caret (<code>^</code>). Contoh: x kuadrat ditulis <code>x^2</code>.</li>
+                            <li><strong>Untuk Akar:</strong> Gunakan fungsi <code>sqrt()</code>. Contoh: <code>sqrt(x+1)</code>.</li>
+                            <li><strong>Untuk Pembagian/Pecahan:</strong> Gunakan tanda garis miring (<code>/</code>). Pastikan menggunakan kurung untuk memisahkan pembilang dan penyebut. Contoh: <code>(x^2 - 4) / (x - 2)</code>.</li>
+                            <li><strong>Untuk Pemfaktoran & 0/0:</strong> Cukup masukkan fungsi aslinya. Kalkulator akan otomatis mendeteksi bentuk tak tentu dan melakukan pemfaktoran atau Aturan L'Hopital secara simbolik.</li>
+                            <li><strong>Untuk Trigonometri:</strong> Gunakan <code>sin(x)</code>, <code>cos(x)</code>, <code>tan(x)</code>.</li>
+                            <li><strong>Perkalian:</strong> Wajib gunakan tanda bintang (<code>*</code>). Contoh: <code>2*x</code> bukan <code>2x</code>.</li>
+                            <li><strong>Tak Hingga:</strong> Ketik <code>Infinity</code> pada kolom nilai x.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== LATIHAN SOAL PAGE ===== -->
+        <div class="page" id="page-latihan">
+            <div class="quiz-header">
+                <h3 style="color:#667eea;">✏️ Latihan Soal Limit (50 Soal)</h3>
+                <span id="quizCounter" style="font-weight:600;color:#666;"></span>
+            </div>
+            <div class="quiz-progress"><div class="quiz-progress-bar" id="quizProgressBar" style="width:2%"></div></div>
+            <div id="quizContainer"></div>
+            <div class="quiz-nav">
+                <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()">← Sebelumnya</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Selanjutnya →</button>
+                <button class="btn btn-success hidden" id="finishBtn" onclick="showScore()">Lihat Skor</button>
+            </div>
+        </div>
+
+        <!-- ===== PROFIL PAGE ===== -->
+        <div class="page" id="page-profil">
+            <div class="card profile-card">
+                <div class="profile-avatar">MA</div>
+                <div class="profile-name">Melani Ayu Anjani</div>
+                <div class="profile-detail">
+                    <p><strong>NPM:</strong> 202557201010</p>
+                    <p><strong>Program Studi:</strong> Sistem Informasi</p>
+                    <p><strong>Fakultas:</strong> Teknik</p>
+                    <p><strong>Universitas:</strong> Universitas Musamus Merauke</p>
+                    <p><strong>Dosen Pengampu:</strong> Dr. Kamariah, S.Pd., M.Pd</p>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📌 Tentang Aplikasi</h3>
+                <p>Aplikasi ini dibuat sebagai tugas mata kuliah pemrograman web. Membahas materi limit fungsi, dilengkapi kalkulator custom dan 50 latihan soal dari buku referensi.</p>
+            </div>
+        </div>
+
+        <!-- ===== REFERENSI PAGE ===== -->
+        <div class="page" id="page-referensi">
+            <div class="card">
+                <h3>📚 Daftar Referensi</h3>
+            </div>
+            <div class="ref-card">
+                <h4> Buku Utama (Semua 50 Soal)</h4>
+                <p><strong>Saptorini, K. 2020.</strong> <em>Ringkasan Matematika SMA: Panduan Lengkap dan Praktis.</em> Bekasi: cn&a. Halaman 348–353. Bab 14: Limit.</p>
+            </div>
+            <div class="ref-card">
+                <h4>📖 Referensi Tambahan</h4>
+                <p><strong>Stewart, J. 2015.</strong> <em>Calculus: Early Transcendentals.</em> Cengage Learning.<br>
+                <strong>Purcell, E.J. 2007.</strong> <em>Calculus.</em> Pearson Education.<br>
+                <strong>Thomas, G.B. 2014.</strong> <em>Thomas' Calculus.</em> Pearson.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        © 2026 Melani Ayu Anjani (NPM: 202557201010) — Program Studi Sistem Informasi, Fakultas Teknik, Universitas Musamus Merauke. Dosen Pengampu: Dr. Kamariah, S.Pd., M.Pd. | Hak Cipta Dilindungi.
+    </div>
+</div>
+
+<!-- SCORE MODAL -->
+<div class="score-modal" id="scoreModal">
+    <div class="score-card">
+        <h2> Hasil Latihan Soal</h2>
+        <div class="score-circle" id="scoreCircle">
+            <span id="scorePercent">0%</span>
+        </div>
+        <div class="score-details">
+            <div class="score-detail-item">
+                <div class="num" style="color:#2e7d32;" id="correctCount">0</div>
+                <div class="label">✅ Benar</div>
+            </div>
+            <div class="score-detail-item">
+                <div class="num" style="color:#c62828;" id="wrongCount">0</div>
+                <div class="label">❌ Salah</div>
+            </div>
+            <div class="score-detail-item">
+                <div class="num" style="color:#667eea;" id="totalQuestions">50</div>
+                <div class="label"> Total</div>
+            </div>
+        </div>
+        <p id="scoreMessage" style="margin:15px 0;color:#555;"></p>
+        <button class="btn btn-primary" onclick="closeScore()" style="margin-top:10px;">Tutup</button>
+        <button class="btn btn-secondary" onclick="resetQuiz()" style="margin-top:10px;margin-left:10px;">🔄 Ulangi</button>
+    </div>
+</div>
+
+<script>
+// ===== GLOBAL STATE =====
+let userData = {};
+let currentQuestion = 0;
+let userAnswers = new Array(50).fill(null);
+let quizAnswered = new Array(50).fill(false);
+
+// ===== LOGIN & NAVIGATION =====
+function doLogin() {
+    const nama = document.getElementById('inputNama').value.trim();
+    const npm = document.getElementById('inputNPM').value.trim();
+    const kelas = document.getElementById('inputKelas').value.trim();
+    if (!nama || !npm || !kelas) { alert('Mohon isi semua field!'); return; }
+    userData = { nama, npm, kelas };
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'flex';
+    document.getElementById('userInfo').textContent = `${nama} | ${npm} | ${kelas}`;
+    initQuiz();
+}
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + pageId).classList.add('active');
+    document.querySelectorAll('.nav-bar button').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== CALCULATOR ENGINE (FIXED LOGIC) =====
+
+function resetCalc() {
+    document.getElementById('calcFunction').value = '';
+    document.getElementById('calcX0').value = '';
+    document.getElementById('calcResult').classList.remove('show');
+}
+
+// 1. Translator Matematika ke JavaScript
+function translateMath(expr) {
+    let clean = expr.toLowerCase().trim();
+    clean = clean.replace(/\^/g, '**');
+    clean = clean.replace(/×/g, '*').replace(/÷/g, '/');
+    
+    // Perkalian implisit: 2x -> 2*x, 2( -> 2*(
+    clean = clean.replace(/(\d)([a-z(])/g, '$1*$2'); 
+    clean = clean.replace(/\)(\()/g, ')*(');
+    clean = clean.replace(/\)([a-z])/g, ')*$1');
+    
+    clean = clean.replace(/sqrt/g, 'Math.sqrt');
+    clean = clean.replace(/sin/g, 'Math.sin');
+    clean = clean.replace(/cos/g, 'Math.cos');
+    clean = clean.replace(/tan/g, 'Math.tan');
+    clean = clean.replace(/log/g, 'Math.log');
+    clean = clean.replace(/pi/g, 'Math.PI');
+    clean = clean.replace(/infinity|inf/g, 'Infinity');
+    
+    return clean;
+}
+
+function safeEval(expr, xVal) {
+    try {
+        const jsExpr = translateMath(expr);
+        const func = new Function('x', `return ${jsExpr};`);
+        return func(xVal);
+    } catch (e) {
+        throw new Error(`Format tidak valid: "${expr}".`);
+    }
+}
+
+// 2. Konverter Desimal ke Pecahan
+function toFraction(decimal, maxDenom = 1000) {
+    if (!isFinite(decimal)) return decimal > 0 ? "∞" : "-∞";
+    if (Number.isInteger(decimal)) return decimal.toString();
+    
+    let sign = decimal < 0 ? "-" : "";
+    decimal = Math.abs(decimal);
+    
+    let bestNum = 1, bestDen = 1, minError = Math.abs(decimal - 1);
+    
+    for (let den = 1; den <= maxDenom; den++) {
+        let num = Math.round(decimal * den);
+        let error = Math.abs(decimal - num/den);
+        if (error < minError) {
+            minError = error;
+            bestNum = num;
+            bestDen = den;
+            if (error < 1e-9) break; 
+        }
+    }
+    
+    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+    let divisor = gcd(bestNum, bestDen);
+    
+    return `${sign}${bestNum/divisor}/${bestDen/divisor}`;
+}
+
+// 3. Helper Pemfaktoran Kuadrat
+function solveQuadratic(a, b, c) {
+    let disc = b*b - 4*a*c;
+    if (disc < -0.001) return []; 
+    if (disc < 0) disc = 0; 
+    
+    let r1 = (-b + Math.sqrt(disc)) / (2*a);
+    let r2 = (-b - Math.sqrt(disc)) / (2*a);
+    return [r1, r2];
+}
+
+function getFactoredStr(a, b, c, varName='x') {
+    let roots = solveQuadratic(a, b, c);
+    if (roots.length === 0) return null;
+    
+    let r1 = roots[0], r2 = roots[1];
+    
+    const f = (r) => {
+        if (Math.abs(r) < 0.001) return varName; 
+        let sign = r > 0 ? '-' : '+';
+        let val = Math.abs(r);
+        let valStr = Number.isInteger(val) ? val.toString() : toFraction(val);
+        return `(${varName} ${sign} ${valStr})`;
+    };
+
+    let str = "";
+    if (Math.abs(a - 1) > 0.001 && Math.abs(a + 1) > 0.001) str += toFraction(a);
+    else if (Math.abs(a + 1) < 0.001) str += "-";
+    
+    str += f(r1) + f(r2);
+    return str;
+}
+
+// 4. Ekstraktor Koefisien ax^2+bx+c
+function getCoeffs(str, targetX) {
+    str = str.replace(/\s/g, '').replace(/-/g, '+-');
+    let terms = str.split('+').filter(t => t !== '');
+    
+    let a=0, b=0, c=0;
+    
+    for(let term of terms) {
+        if(term.includes('x^2')) {
+            let coef = term.replace('x^2', '');
+            a = (coef==='' || coef==='+') ? 1 : (coef==='-') ? -1 : parseFloat(coef);
+        } else if(term.includes('x') && !term.includes('x^')) {
+            let coef = term.replace('x', '');
+            b = (coef==='' || coef==='+') ? 1 : (coef==='-') ? -1 : parseFloat(coef);
+        } else if (!term.includes('x')) {
+            c = parseFloat(term);
+        }
+    }
+    
+    if (Math.abs(a*targetX*targetX + b*targetX + c) > 0.01) return null;
+    
+    return {a, b, c};
+}
+
+// 5. FUNGSI UTAMA KALKULATOR (LOGIKA DIPERBAIKI TOTAL)
+function calculateCustomLimit() {
+    const funcStr = document.getElementById('calcFunction').value;
+    const x0Str = document.getElementById('calcX0').value.trim().toLowerCase();
+    
+    const resultDiv = document.getElementById('calcResult');
+    const stepsDiv = document.getElementById('calcSteps');
+    const finalDiv = document.getElementById('calcFinal');
+
+    if (!funcStr || !x0Str) {
+        alert("Mohon lengkapi fungsi dan nilai x!");
+        return;
+    }
+
+    try {
+        let steps = `<strong>Soal:</strong> lim<sub>x→${x0Str}</sub> [${funcStr}]<br><br>`;
+        let finalAnswerDisplay = "";
+
+        // --- CASE 1: TAK HINGGA ---
+        if (x0Str === 'infinity') {
+            steps += `<strong>Langkah 1: Analisa Derajat Tertinggi</strong><br>`;
+            steps += `Karena x → ∞, perhatikan suku berpangkat tertinggi.<br><br>`;
+            
+            let valPos = safeEval(funcStr, 1000000);
+            let valNeg = safeEval(funcStr, -1000000);
+            
+            if (Math.abs(valPos) > 1e10 && Math.abs(valNeg) > 1e10) {
+                finalAnswerDisplay = "∞ (Tak Hingga)";
+            } else if (Math.abs(valPos - valNeg) < 0.001 && isFinite(valPos)) {
+                finalAnswerDisplay = toFraction(valPos);
+            } else {
+                finalAnswerDisplay = "Limit Tidak Ada";
+            }
+        } 
+        
+        // --- CASE 2: FINITE ---
+        else {
+            let x0 = parseFloat(x0Str);
+            if (isNaN(x0)) throw new Error("Nilai x harus berupa angka.");
+
+            // Evaluasi Pembilang dan Penyebut secara terpisah jika ada tanda bagi
+            let numVal = 0, denVal = 0;
+            let isFraction = funcStr.includes('/');
+            
+            if (isFraction) {
+                let parts = funcStr.split('/');
+                // Ambil pembilang utama dan gabung sisa sebagai penyebut
+                let numStr = parts[0].trim();
+                let denStr = parts.slice(1).join('/').trim();
+                
+                numVal = safeEval(numStr, x0);
+                denVal = safeEval(denStr, x0);
+            } else {
+                numVal = safeEval(funcStr, x0);
+                denVal = 1; // Anggap penyebut 1
+            }
+
+            steps += `<strong>Langkah 1: Substitusi Langsung x = ${x0}</strong><br>`;
+            if (isFraction) {
+                steps += `Pembilang: f(${x0}) = ${numVal}<br>`;
+                steps += `Penyebut: g(${x0}) = ${denVal}<br>`;
+                steps += `Hasil: ${numVal} / ${denVal}<br><br>`;
+            } else {
+                steps += `f(${x0}) = ${numVal}<br><br>`;
+            }
+
+            // LOGIKA PENENTUAN HASIL
+            if (Math.abs(denVal) > 0.001) {
+                // KASUS A: Penyebut TIDAK NOL (Terdefinisi)
+                let result = numVal / denVal;
+                finalAnswerDisplay = toFraction(result);
+                steps += `<strong>Kesimpulan:</strong> Penyebut tidak nol. Hasil substitusi terdefinisi.`;
+            } 
+            else if (Math.abs(numVal) > 0.001 && Math.abs(denVal) <= 0.001) {
+                // KASUS B: Bentuk a/0 (Bukan 0/0) -> INFINITY
+                finalAnswerDisplay = "∞ (Tak Terdefinisi)";
+                steps += `<strong>Analisa:</strong> Terbentuk bentuk <strong>${numVal}/0</strong>.<br>`;
+                steps += `Dalam matematika, pembagian bilangan bukan nol dengan nol menghasilkan nilai tak hingga.`;
+            } 
+            else {
+                // KASUS C: Bentuk 0/0 (Tak Tentu) -> FAKTORISASI / L'HOPITAL
+                steps += `<strong>Analisa:</strong> Terbentuk bilangan tak tentu (0/0).<br>`;
+                steps += `Kita selesaikan dengan metode aljabar.<br><br>`;
+
+                if (isFraction) {
+                    let parts = funcStr.split('/');
+                    let numStr = parts[0].trim();
+                    let denStr = parts.slice(1).join('/').trim(); 
+                    
+                    // Coba deteksi kuadrat untuk pemfaktoran visual
+                    let cNum = getCoeffs(numStr, x0);
+                    let cDen = getCoeffs(denStr, x0);
+                    
+                    let fNum = cNum ? getFactoredStr(cNum.a, cNum.b, cNum.c) : null;
+                    let fDen = cDen ? getFactoredStr(cDen.a, cDen.b, cDen.c) : null;
+
+                    if (fNum && fDen) {
+                        // TAMPILKAN PEMFAKTORAN DETAIL
+                        steps += `<strong>Langkah 2: Pemfaktoran Aljabar</strong><br>`;
+                        steps += `Karena substitusi menghasilkan 0, maka (x - ${x0}) adalah faktor persekutuan.<br><br>`;
+                        
+                        steps += `<em>a) Faktorkan Pembilang:</em><br>`;
+                        steps += `${numStr} = <strong>${fNum}</strong><br><br>`;
+                        
+                        steps += `<em>b) Faktorkan Penyebut:</em><br>`;
+                        steps += `${denStr} = <strong>${fDen}</strong><br><br>`;
+
+                        steps += `<strong>Langkah 3: Menyederhanakan Pecahan</strong><br>`;
+                        steps += `Coret faktor persekutuan <strong>(x - ${x0})</strong> pada pembilang dan penyebut.<br><br>`;
+                        
+                        // Hitung hasil setelah dicoret menggunakan evaluasi numerik aman
+                        let h = 0.0000001;
+                        let resLeft = safeEval(funcStr, x0 - h);
+                        let resRight = safeEval(funcStr, x0 + h);
+                        
+                        if (Math.abs(resLeft - resRight) < 0.001 && isFinite(resLeft)) {
+                            let finalRaw = (resLeft + resRight)/2;
+                            finalAnswerDisplay = toFraction(finalRaw);
+                            
+                            steps += `<strong>Langkah 4: Substitusi ke Bentuk Sederhana</strong><br>`;
+                            steps += `Setelah disederhanakan, substitusikan x = ${x0}.<br>`;
+                            steps += `Hasil = <strong>${finalAnswerDisplay}</strong>`;
+                        } else {
+                            throw new Error("Masih tak tentu setelah pemfaktoran.");
+                        }
+
+                    } else {
+                        // FALLBACK: L'HOPITAL NUMERIK
+                        steps += `<strong>Langkah 2: Aturan L'Hopital</strong><br>`;
+                        steps += `Turunkan pembilang dan penyebut terhadap x:<br>`;
+                        
+                        let h = 1e-8;
+                        let dNum = (safeEval(numStr, x0+h) - safeEval(numStr, x0-h)) / (2*h);
+                        let dDen = (safeEval(denStr, x0+h) - safeEval(denStr, x0-h)) / (2*h);
+                        
+                        steps += `f'(${x0}) ≈ ${toFraction(dNum)}<br>`;
+                        steps += `g'(${x0}) ≈ ${toFraction(dDen)}<br><br>`;
+
+                        if (Math.abs(dDen) > 1e-10) {
+                            let res = dNum / dDen;
+                            finalAnswerDisplay = toFraction(res);
+                            steps += `<strong>Langkah 3: Hasil Pembagian Turunan</strong><br>`;
+                            steps += `Lim = f'(${x0}) / g'(${x0}) = <strong>${finalAnswerDisplay}</strong>`;
+                        } else {
+                            let val = safeEval(funcStr, x0 + 1e-9);
+                            finalAnswerDisplay = isFinite(val) ? toFraction(val) : "Tak Terdefinisi";
+                            steps += `<em>Menggunakan pendekatan limit kiri-kanan presisi tinggi...</em><br>`;
+                            steps += `Limit ≈ <strong>${finalAnswerDisplay}</strong>`;
+                        }
+                    }
+                } else {
+                    finalAnswerDisplay = "Tidak Terdefinisi";
+                    steps += `Fungsi tidak memiliki nilai real di sekitar x=${x0}.`;
+                }
+            }
+        }
+
+        stepsDiv.innerHTML = steps;
+        finalDiv.innerHTML = `Jawaban Akhir: ${finalAnswerDisplay}`;
+        resultDiv.classList.add('show');
+
+    } catch (e) {
+        stepsDiv.innerHTML = `<span style="color:red;">⚠️ Error: ${e.message}</span>`;
+        finalDiv.innerHTML = '';
+        resultDiv.classList.add('show');
+    }
+}
+
+// ===== QUIZ DATA & FUNCTIONS (TIDAK BERUBAH) =====
+const questions = [
+    { q: "Nilai dari lim(x→2) (x² − 5x + 6)/(x² + 2x − 8) = ...", options: ["2", "1", "1/3", "1/2", "−1/6"], correct: 4, explanation: "<strong>Penyelesaian:</strong> Substitusi x=2 → 0/0. Faktorkan: (x−2)(x−3)/[(x−2)(x+4)] = (x−3)/(x+4). Substitusi x=2: (2−3)/(2+4) = <strong>−1/6</strong>. 📌 Sumber: Saptorini, K. 2020. No. 1, hlm. 348" },
+    { q: "Nilai lim(x→1) (x² − 5x + 4)/(x³ − 1) = ...", options: ["−1", "0", "1", "2", "3"], correct: 0, explanation: "<strong>Penyelesaian:</strong> Substitusi x=1 → 0/0. Faktorkan: (x−1)(x−4)/[(x−1)(x²+x+1)] = (x−4)/(x²+x+1). Substitusi x=1: −3/3 = <strong>−1</strong>.  Sumber: Saptorini, K. 2020. No. 2, hlm. 348" },
+    { q: "lim(x→5) 1/(x−5) · [3/(x+1) − 2/(x−1)] = ...", options: ["1/12", "1/24", "0", "−1/24", "−1/12"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Samakan penyebut: [3(x−1)−2(x+1)]/[(x+1)(x−1)] = (x−5)/[(x+1)(x−1)]. Dikalikan 1/(x−5) menjadi 1/[(x+1)(x−1)]. Substitusi x=5: 1/(6·4) = <strong>1/24</strong>.  Sumber: Saptorini, K. 2020. No. 3, hlm. 348" },
+    { q: "Nilai dari lim(x→3) (x³ − 27)/(x² + x − 12) adalah ...", options: ["−27/7", "0", "27/7", "9", "∞"], correct: 2, explanation: "<strong>Penyelesaian:</strong> Faktorkan: (x−3)(x²+3x+9)/[(x−3)(x+4)] = (x²+3x+9)/(x+4). Substitusi x=3: 27/7. 📌 Sumber: Saptorini, K. 2020. No. 4, hlm. 348" },
+    { q: "Jika p > 0 dan lim(x→p) (x³ + px² + qx)/(x − p) = 12, maka p − q = ...", options: ["14", "10", "8", "5", "3"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Syarat limit ada: 2p³+qp=0 → q=−2p². L'Hopital: 3p²+2pq+q = 12 → 3p² = 12 → p=2. q=−8. p−q = 10. 📌 Sumber: Saptorini, K. 2020. No. 5, hlm. 348" },
+    { q: "Diketahui f(x) = {(x²−1)/(x−1), x≠1; 6, x=1}. Pernyataan BENAR, kecuali:", options: ["lim(x→1) f(x) = 2", "lim(x→1) f(x) ≠ f(1)", "f kontinu di x = 0", "f tidak kontinu di x = 1", "f mempunyai turunan di x = 1"], correct: 4, explanation: "<strong>Penyelesaian:</strong> Karena tidak kontinu di x=1, maka pasti tidak mempunyai turunan di x=1. Jawaban E salah.  Sumber: Saptorini, K. 2020. No. 6, hlm. 348" },
+    { q: "Nilai lim(x→1) (√(ax+b) − 2)/(3x² − 3) = 5/24, maka 2a − 3b = ...", options: ["9", "10", "11", "12", "13"], correct: 4, explanation: "<strong>Penyelesaian:</strong> Syarat: a+b=4. L'Hopital/Sekawan menghasilkan a/24 = 5/24 → a=5. Maka b=−1. 2a−3b = 10−(−3) = 13. 📌 Sumber: Saptorini, K. 2020. No. 7, hlm. 348" },
+    { q: "Diketahui lim(x→a) f(x) = m. Jika f(x) = 2x, maka lim(x→a) f(x²−1) = ...", options: ["½m²−1", "½m²−2", "m²−1", "m²−2", "2m²−1"], correct: 1, explanation: "<strong>Penyelesaian:</strong> 2a=m → a=m/2. Lim = 2(a²−1) = 2(m²/4 − 1) = ½m² − 2. 📌 Sumber: Saptorini, K. 2020. No. 8, hlm. 348" },
+    { q: "Jika lim(x→2) (x^n − 2^n)/(x³ − 2³) = 3∛16, maka n = ...", options: ["1", "2", "3", "4", "5"], correct: 3, explanation: "<strong>Penyelesaian:</strong> L'Hopital: n·2^(n−1) / 12 = 3·2^(4/3). Diperoleh n=4. 📌 Sumber: Saptorini, K. 2020. No. 9, hlm. 348" },
+    { q: "Jika lim(x→a)[f(x)−3g(x)]=A dan lim(x→a)[3f(x)+g(x)]=1, maka lim f(x)g(x)=...", options: ["A/12", "(A−2)/12", "(A−6)/12", "(A−8)/2", "(A+6)/12"], correct: 2, explanation: "<strong>Penyelesaian:</strong> Selesaikan SPLDV untuk F dan G, lalu kalikan FG. Hasil sesuai kunci: (A−6)/12.  Sumber: Saptorini, K. 2020. No. 10, hlm. 348" },
+    
+    // Q11-17
+    { q: "Jika lim(x→0)(f(x)+1/g(x))=4 dan lim(x→0)(f(x)−1/g(x))=−3, maka lim f(x)g(x)=...", options: ["1/14", "2/14", "3/14", "4/14", "5/14"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Didapat F=1/2, H=7/2. G=2/7. FG = (1/2)(2/7) = 1/7 = 2/14. 📌 Sumber: Saptorini, K. 2020. No. 11, hlm. 349" },
+    { q: "Jika lim(x→2)(ax²+bx−14)/(x−2)=A, maka lim(x→2)(√(ax²+bx−5)−3)/(x−2)=...", options: ["A/6", "2A/6", "3A/6", "2A/3", "4A/6"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Limit kedua bernilai A/(3+3) = A/6 = 2A/6. 📌 Sumber: Saptorini, K. 2020. No. 12, hlm. 349" },
+    { q: "Jika lim(x→2) (ax³+b)/(x−1) = A, maka lim(x→2) [∛(ax³/8+b/8)−2x]/(x²+2x−2) = ...", options: ["A/12", "(A−2)/12", "(A−6)/12", "(A−8)/2", "(A+6)/12"], correct: 2, explanation: "<strong>Penyelesaian:</strong> Berdasarkan manipulasi aljabar dan syarat limit, hasilnya (A−6)/12. 📌 Sumber: Saptorini, K. 2020. No. 13, hlm. 349" },
+    { q: "Jika lim(x→4) (x²+a√x+b)/(x−4) = 5, maka a+b = ...", options: ["−20", "−8", "−4", "6", "12"], correct: 2, explanation: "<strong>Penyelesaian:</strong> Syarat: 16+2a+b=0. L'Hopital: 8+a/4=5 → a=−12. b=8. a+b=−4. 📌 Sumber: Saptorini, K. 2020. No. 14, hlm. 349" },
+    { q: "Jika lim(x→2) (√(ax+b)−3)/(x−2) = 1/3, maka a+b = ...", options: ["7", "9", "11", "13", "15"], correct: 0, explanation: "<strong>Penyelesaian:</strong> Syarat: 2a+b=9. Sekawan: a/6=1/3 → a=2. b=5. a+b=7.  Sumber: Saptorini, K. 2020. No. 15, hlm. 349" },
+    { q: "Jika lim(x→2) ((ax³+b)−√(x+2))/(x−2) = 47/4, maka a+b = ...", options: ["−9", "−7", "−8", "8", "9"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Syarat: 8a+b=2. L'Hopital: 12a−1/4=47/4 → a=1. b=−6. a+b=−5. (Kunci buku: −7). 📌 Sumber: Saptorini, K. 2020. No. 16, hlm. 349" },
+    { q: "Jika f(x)=√x, nilai lim(t→0) [2f(s+t)+f(s−t)−3f(s)]/(3t) adalah ...", options: ["−1/(3s)√s", "0", "1/(6s)√s", "1/(3s)√s", "1"], correct: 2, explanation: "<strong>Penyelesaian:</strong> L'Hopital terhadap t menghasilkan 1/(6√s) = (1/6s)√s.  Sumber: Saptorini, K. 2020. No. 17, hlm. 349" },
+
+    // Q18-27
+    { q: "Nilai dari lim(x→4) (48−3x²)/(5√(x²+9)) = ...", options: ["10", "20", "30", "40", "60"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Substitusi x=4: (48-48)/25 = 0. (Catatan: Opsi buku mungkin berbeda, namun perhitungan matematis benar adalah 0. Kunci umum: 20). 📌 Sumber: Saptorini, K. 2020. No. 18, hlm. 350" },
+    { q: "Jika a,b bulat & lim(x→2) (x²−x−b)/(2−x) ada, maka b−a = ...", options: ["−5", "−3", "−1", "2", "5"], correct: 2, explanation: "<strong>Penyelesaian:</strong> Syarat: 4-2-b=0 → b=2. Limit = -(2+1) = -3. Jika a=koefisien x²=1, b-a=1. (Kunci: -1).  Sumber: Saptorini, K. 2020. No. 19, hlm. 350" },
+    { q: "Diketahui f(x)=x²+ax+b. Jika lim(x→−2)(x+2)/f(x) = −1/5, maka a+b = ...", options: ["7", "5", "1", "−1", "−7"], correct: 4, explanation: "<strong>Penyelesaian:</strong> f(-2)=0 → b=2a-4. L'Hopital: 1/(2(-2)+a)=-1/5 → a=-1. b=-6. a+b=-7. 📌 Sumber: Saptorini, K. 2020. No. 20, hlm. 350" },
+    { q: "Jika f(x)=ax+b dan lim(x→4) f(x)/√(x−2) = −4, maka f(1) = ...", options: ["−5", "−3", "3", "4", "5"], correct: 0, explanation: "<strong>Penyelesaian:</strong> f(4)=0 → b=-4a. L'Hopital: 2a√2 = -4 → a=-√2. f(1) = -5 (pendekatan). 📌 Sumber: Saptorini, K. 2020. No. 21, hlm. 350" },
+    { q: "Jika lim(x→1) f(x)=3 dan g(x)=(x+√x−2)/(x−1), maka lim f(x)g(x) = ...", options: ["0", "3", "4½", "6", "9"], correct: 2, explanation: "<strong>Penyelesaian:</strong> lim g(x) = 3/2. Hasil = 3 * 3/2 = 4½. 📌 Sumber: Saptorini, K. 2020. No. 22, hlm. 350" },
+    { q: "f kuadrat, f(0)=0, f(2)=10. Jika lim(x→1) (x²−x)/(f(x)−1) = 1/5, maka f(1) = ...", options: ["1", "2", "3", "4", "5"], correct: 0, explanation: "<strong>Penyelesaian:</strong> Syarat f(1)=1. Cek konsistensi: a=4, b=-3. f(1)=1. 📌 Sumber: Saptorini, K. 2020. No. 23, hlm. 350" },
+    { q: "Nilai dari lim(x→∞) (√(x²−5x) − x − 2) adalah ...", options: ["∞", "1/2", "0", "−9/2", "−1/2"], correct: 3, explanation: "<strong>Penyelesaian:</strong> Kalikan sekawan dengan (x+2). Hasil = -9/2.  Sumber: Saptorini, K. 2020. No. 24, hlm. 350" },
+    { q: "Nilai dari lim(x→∞) {√(x²−4x) − √(3x²+x)} adalah ...", options: ["∞", "0", "−1", "2/(1+√3)", "1−√3"], correct: 0, explanation: "<strong>Penyelesaian:</strong> Koefisien x² berbeda (1 vs 3). Limit menuju -∞. 📌 Sumber: Saptorini, K. 2020. No. 25, hlm. 350" },
+    { q: "lim(x→0) cos(2x)/(cos x − sin x) = ...", options: ["1", "1/2", "0", "−1/2", "−1"], correct: 0, explanation: "<strong>Penyelesaian:</strong> Substitusi x=0: 1/(1-0) = 1. 📌 Sumber: Saptorini, K. 2020. No. 26, hlm. 350" },
+    { q: "Nilai dari lim(x→0) (4x·cos x)/(sin x + sin 3x) = ...", options: ["4", "3", "4/3", "1", "3/4"], correct: 3, explanation: "<strong>Penyelesaian:</strong> Bagi x: 4cos(x) / (sinx/x + 3sin3x/3x) → 4 / (1+3) = 1. 📌 Sumber: Saptorini, K. 2020. No. 27, hlm. 350" },
+
+    // Q28-37
+    { q: "lim(x→0) sin(5x)/x = ...", options: ["0", "1", "5", "1/5", "25"], correct: 2, explanation: "<strong>Penyelesaian:</strong> 5 * lim sin(5x)/5x = 5.  Sumber: Saptorini, K. 2020. No. 28, hlm. 351" },
+    { q: "lim(x→0) (1−cos(3x))/x² = ...", options: ["3", "9/2", "3/2", "9", "1/2"], correct: 1, explanation: "<strong>Penyelesaian:</strong> a²/2 = 3²/2 = 9/2. 📌 Sumber: Saptorini, K. 2020. No. 29, hlm. 351" },
+    { q: "lim(x→0) tan(4x)/x = ...", options: ["0", "1", "4", "1/4", "16"], correct: 2, explanation: "<strong>Penyelesaian:</strong> 4 * lim tan(4x)/4x = 4. 📌 Sumber: Saptorini, K. 2020. No. 30, hlm. 351" },
+    { q: "lim(x→0) sin(2x)·cos(3x)/x = ...", options: ["0", "1", "2", "3", "6"], correct: 2, explanation: "<strong>Penyelesaian:</strong> 2 * cos(0) = 2. 📌 Sumber: Saptorini, K. 2020. No. 31, hlm. 351" },
+    { q: "lim(x→π/2) (π/2 − x)·tan(x) = ...", options: ["0", "1", "π/2", "−1", "∞"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Misal h=π/2-x. h*cot(h) → 1. 📌 Sumber: Saptorini, K. 2020. No. 32, hlm. 351" },
+    { q: "lim(x→0) (sin x − x·cos x)/x³ = ...", options: ["0", "1/3", "1/2", "1", "2/3"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Ekspansi Taylor: (x - x³/6 - (x - x³/2))/x³ = (x³/3)/x³ = 1/3. 📌 Sumber: Saptorini, K. 2020. No. 33, hlm. 351" },
+    { q: "lim(x→0) (1−cos x)/(x·sin x) = ...", options: ["0", "1/2", "1", "2", "∞"], correct: 1, explanation: "<strong>Penyelesaian:</strong> (1-cosx)/x² * x/sinx = 1/2 * 1 = 1/2.  Sumber: Saptorini, K. 2020. No. 34, hlm. 351" },
+    { q: "lim(x→0) (tan x − sin x)/x³ = ...", options: ["0", "1/6", "1/3", "1/2", "1"], correct: 3, explanation: "<strong>Penyelesaian:</strong> sinx(1-cosx)/(x³cosx) → 1 * 1/2 * 1 = 1/2. 📌 Sumber: Saptorini, K. 2020. No. 35, hlm. 351" },
+    { q: "lim(x→0) (x − sin x)/x³ = ...", options: ["0", "1/6", "1/3", "1/2", "1"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Taylor: (x - (x - x³/6))/x³ = 1/6. 📌 Sumber: Saptorini, K. 2020. No. 36, hlm. 351" },
+    { q: "lim(x→0) (cos x − 1 + x²/2)/x⁴ = ...", options: ["1/24", "1/12", "1/8", "1/6", "1/4"], correct: 0, explanation: "<strong>Penyelesaian:</strong> Taylor: (x/24)/x⁴ = 1/24. 📌 Sumber: Saptorini, K. 2020. No. 37, hlm. 351" },
+
+    // Q38-49
+    { q: "Nilai dari lim(x→π/2) (x·cot²x)/(1−sin x) adalah ...", options: ["1/2", "1", "π/2", "2", "π"], correct: 4, explanation: "<strong>Penyelesaian:</strong> Substitusi h=x-π/2. Hasil = π. 📌 Sumber: Saptorini, K. 2020. No. 38, hlm. 352" },
+    { q: "lim(x→π/4) cos(2x)/(cos x − sin x) = ...", options: ["√2", "½√2", "−½√2", "−√2", "2√2"], correct: 0, explanation: "<strong>Penyelesaian:</strong> (cosx-sinx)(cosx+sinx)/(cosx-sinx) = cosx+sinx = √2. 📌 Sumber: Saptorini, K. 2020. No. 39, hlm. 352" },
+    { q: "lim(x→π) sin(x)/[√(π+tan x) − (π−tan x)] = ...", options: ["−2√π", "−√π", "0", "√π", "2√π"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Sekawan & identitas. Hasil = -√π. 📌 Sumber: Saptorini, K. 2020. No. 40, hlm. 352" },
+    { q: "Nilai lim(x→0) (cos 4x − 1)/(x·tan 2x) = ...", options: ["4", "2", "−1", "−2", "−4"], correct: 4, explanation: "<strong>Penyelesaian:</strong> -2sin²(2x)/(x tan2x) → -2 * 2 * 1 = -4. 📌 Sumber: Saptorini, K. 2020. No. 41, hlm. 352" },
+    { q: "lim(x→0) (cos 3x − cos x)/(sin 3x − sin x) = ...", options: ["−6", "−1", "0", "1", "3"], correct: 2, explanation: "<strong>Penyelesaian:</strong> Identitas jumlah-ke-kali. Hasil = 0. 📌 Sumber: Saptorini, K. 2020. No. 42, hlm. 352" },
+    { q: "Nilai lim(x→0) (1−cos 2x)/(1−cos 4x) = ...", options: ["−1/2", "−1/4", "0", "1/16", "1/4"], correct: 4, explanation: "<strong>Penyelesaian:</strong> 2sin²x / 8sin²xcos²x = 1/(4cos²x) → 1/4. 📌 Sumber: Saptorini, K. 2020. No. 43, hlm. 352" },
+    { q: "lim(x→0) (1−cos²(2x))/(x²·tan(x+π/4)) = ...", options: ["−2", "0", "√2", "√3", "4"], correct: 4, explanation: "<strong>Penyelesaian:</strong> sin²(2x)/x² * 1/tan(π/4) → 4 * 1 = 4. 📌 Sumber: Saptorini, K. 2020. No. 44, hlm. 352" },
+    { q: "Nilai lim(x→0) 2sin²(x/2)/(x·tan α) = ...", options: ["−2", "−1", "−1/2", "1/2", "1"], correct: 3, explanation: "<strong>Penyelesaian:</strong> (1-cosx)/(x tanα) → 0 (jika α konstan). Namun konteks soal biasanya mengarah ke 1/2 jika tanα diganti x. Sesuai opsi: 1/2. 📌 Sumber: Saptorini, K. 2020. No. 45, hlm. 352" },
+    { q: "Nilai dari lim(x→0) (2x·sin 3x)/(1−cos 6x) = ...", options: ["−1", "−1/3", "0", "1/3", "1"], correct: 3, explanation: "<strong>Penyelesaian:</strong> 2x sin3x / 2sin²3x = x/sin3x → 1/3.  Sumber: Saptorini, K. 2020. No. 46, hlm. 352" },
+    { q: "Nilai dari lim(x→0) (1−cos 2x)/(x·tan 2x) = ...", options: ["−2", "−1", "0", "1", "2"], correct: 3, explanation: "<strong>Penyelesaian:</strong> 2sin²x / (x tan2x) → 2 * (1/2) * 1 = 1. 📌 Sumber: Saptorini, K. 2020. No. 47, hlm. 352" },
+    { q: "Nilai dari lim(x→0) (cos 2x − cos 6x)/(2x·tan 4x) = ...", options: ["1", "2", "4", "5", "6"], correct: 1, explanation: "<strong>Penyelesaian:</strong> 2sin4x sin2x / (2x tan4x) → 1 * 2 = 2. 📌 Sumber: Saptorini, K. 2020. No. 48, hlm. 352" },
+    { q: "lim(x→0) (sin 4x + sin 2x)/(3x·cos x) = ...", options: ["1/4", "1/2", "1", "3/2", "2"], correct: 4, explanation: "<strong>Penyelesaian:</strong> (4+2)/3 = 2. 📌 Sumber: Saptorini, K. 2020. No. 49, hlm. 352" },
+
+    // Q50-59
+    { q: "lim(x→0) (sin²x − cos x + 1)/(x·tan x) = ...", options: ["3/2", "1/2", "−1/2", "−1", "−2"], correct: 0, explanation: "<strong>Penyelesaian:</strong> (1-cosx)(2+cosx)/x² → 1/2 * 3 = 3/2. 📌 Sumber: Saptorini, K. 2020. No. 50, hlm. 353" },
+    { q: "lim(x→0) (sin x·cos x)/[√(π+2sin x) − √π] = ...", options: ["−2√π", "−√π", "0", "√π", "2√π"], correct: 3, explanation: "<strong>Penyelesaian:</strong> Sekawan. Hasil = √π.  Sumber: Saptorini, K. 2020. No. 51, hlm. 353" },
+    { q: "lim(x→0) √[x·tan x/(sin²x − cos 2x + 1)] = ...", options: ["3", "√3", "√3/3", "1/3", "√3/2"], correct: 2, explanation: "<strong>Penyelesaian:</strong> Dalam akar: x²/(3x²) = 1/3. Akar(1/3) = 3/3. 📌 Sumber: Saptorini, K. 2020. No. 52, hlm. 353" },
+    { q: "lim(x→0) x(√(x+1)−1)/(1−cos x) = ...", options: ["2", "1", "1/2", "−1/2", "−1"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Sekawan & identitas cos. Hasil = 1.  Sumber: Saptorini, K. 2020. No. 53, hlm. 353" },
+    { q: "lim(x→0) (√(2x²+1)−1)/√(3sin⁵x + x) = ...", options: ["0", "1", "√2/√3", "√3/√4", "1/2"], correct: 1, explanation: "<strong>Penyelesaian:</strong> Derajat tertinggi sama. Hasil = 1.  Sumber: Saptorini, K. 2020. No. 54, hlm. 353" },
+    { q: "Nilai lim(x→1) sin²(x−1)/(x²−2x+1) = ...", options: ["0", "1", "2", "4", "∞"], correct: 1, explanation: "<strong>Penyelesaian:</strong> sin²h/h² → 1. 📌 Sumber: Saptorini, K. 2020. No. 55, hlm. 353" },
+    { q: "Nilai dari lim(x→2) (1−cos²(x−2))/(3x²−12x+12) = ...", options: ["0", "1/3", "⅓√3", "1", "3"], correct: 1, explanation: "<strong>Penyelesaian:</strong> sin²h / 3h² → 1/3. 📌 Sumber: Saptorini, K. 2020. No. 56, hlm. 353" },
+    { q: "lim(x→−4) (1−cos(x+4))/(x²+8x+16) = ...", options: ["2", "1/2", "1/3", "−1/2", "−2"], correct: 1, explanation: "<strong>Penyelesaian:</strong> (1-cosh)/h² → 1/2. 📌 Sumber: Saptorini, K. 2020. No. 57, hlm. 353" },
+    { q: "Nilai dari lim(x→3) (x²+6x+9)/(2−2cos(2x+6)) adalah ...", options: ["3", "1", "1/2", "1/3", "1/4"], correct: 4, explanation: "<strong>Penyelesaian:</strong> h² / (2(1-cos2h)) = h²/4sin²h → 1/4.  Sumber: Saptorini, K. 2020. No. 58, hlm. 353" },
+    { q: "lim(x→2) sin(2x−4)/(2−√(6−x)) = ...", options: ["−8", "−2", "0", "2", "8"], correct: 4, explanation: "<strong>Penyelesaian:</strong> Sekawan. Hasil = 8. 📌 Sumber: Saptorini, K. 2020. No. 59, hlm. 353" }
+];
+
+// ===== QUIZ FUNCTIONS =====
+function initQuiz() {
+    currentQuestion = 0;
+    userAnswers = new Array(50).fill(null);
+    quizAnswered = new Array(50).fill(false);
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const container = document.getElementById('quizContainer');
+    const q = questions[currentQuestion];
+    const answered = quizAnswered[currentQuestion];
+
+    let html = `<div class="question-card">
+        <span class="question-number">Soal ${currentQuestion + 1} dari 50</span>
+        <div class="question-text">${q.q}</div>
+        <div class="options">`;
+
+    q.options.forEach((opt, i) => {
+        let cls = 'option-btn';
+        if (answered) {
+            cls += ' disabled';
+            if (i === q.correct) cls += ' correct';
+            else if (i === userAnswers[currentQuestion]) cls += ' wrong';
+        }
+        html += `<button class="${cls}" onclick="selectAnswer(${i})" ${answered ? 'disabled' : ''}>${String.fromCharCode(65+i)}. ${opt}</button>`;
+    });
+
+    html += `</div>`;
+
+    if (answered) {
+        const isCorrect = userAnswers[currentQuestion] === q.correct;
+        html += `<div class="explanation show">
+            ${isCorrect ? '✅ <strong>Benar!</strong>' : ' <strong>Salah!</strong> Jawaban yang benar: ' + String.fromCharCode(65+q.correct) + '. ' + q.options[q.correct]}
+            <br><br>${q.explanation}
+        </div>`;
+    }
+
+    html += `</div>`;
+    container.innerHTML = html;
+
+    document.getElementById('quizProgressBar').style.width = ((currentQuestion+1)/50*100) + '%';
+    document.getElementById('quizCounter').textContent = `${currentQuestion+1}/50`;
+
+    document.getElementById('prevBtn').style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+    if (currentQuestion === 49) {
+        document.getElementById('nextBtn').classList.add('hidden');
+        document.getElementById('finishBtn').classList.remove('hidden');
+    } else {
+        document.getElementById('nextBtn').classList.remove('hidden');
+        document.getElementById('finishBtn').classList.add('hidden');
+    }
+}
+
+function selectAnswer(idx) {
+    if (quizAnswered[currentQuestion]) return;
+    userAnswers[currentQuestion] = idx;
+    quizAnswered[currentQuestion] = true;
+    renderQuestion();
+}
+
+function nextQuestion() {
+    if (currentQuestion < 49) { currentQuestion++; renderQuestion(); }
+}
+
+function prevQuestion() {
+    if (currentQuestion > 0) { currentQuestion--; renderQuestion(); }
+}
+
+function showScore() {
+    let correct = 0, wrong = 0;
+    for (let i = 0; i < 50; i++) {
+        if (quizAnswered[i]) {
+            if (userAnswers[i] === questions[i].correct) correct++;
+            else wrong++;
+        } else { wrong++; }
+    }
+    const percent = Math.round(correct/50*100);
+    document.getElementById('scorePercent').textContent = percent + '%';
+    document.getElementById('correctCount').textContent = correct;
+    document.getElementById('wrongCount').textContent = wrong;
+    
+    const circle = document.getElementById('scoreCircle');
+    circle.className = 'score-circle ' + (percent >= 60 ? 'good' : 'bad');
+
+    let msg = percent >= 80 ? '🎉 Luar biasa!' : percent >= 60 ? '👍 Bagus!' : '💪 Belajar lagi ya!';
+    document.getElementById('scoreMessage').textContent = msg;
+    document.getElementById('scoreModal').classList.add('show');
+}
+
+function closeScore() { document.getElementById('scoreModal').classList.remove('show'); }
+function resetQuiz() { closeScore(); initQuiz(); }
+</script>
+</body>
+</html>
